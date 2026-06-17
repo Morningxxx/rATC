@@ -1,3 +1,4 @@
+pub mod app;
 pub mod config;
 pub mod converter;
 pub mod error;
