@@ -31,7 +31,7 @@ impl Fetcher {
         match self.client.get(url).send() {
             Ok(resp) if resp.status().is_success() => {
                 let text = resp.text()?;
-                let _ = std::fs::write(self.cache_path(url), &text);
+                let _ = self.write_cache(url, &text);
                 Ok(text)
             }
             _ => self.read_cache(url),
@@ -41,6 +41,20 @@ impl Fetcher {
     pub fn read_cache(&self, url: &str) -> Result<String> {
         let p = self.cache_path(url);
         std::fs::read_to_string(&p).map_err(Into::into)
+    }
+
+    /// Write the cache file with 0600 perms — it contains sensitive
+    /// credentials (UUIDs/passwords) from the subscription.
+    fn write_cache(&self, url: &str, text: &str) -> std::io::Result<()> {
+        let p = self.cache_path(url);
+        std::fs::write(&p, text)?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o600)).ok();
+        }
+        let _ = p;
+        Ok(())
     }
 
     pub fn fetch(&self, url: &str) -> Result<ParsedSubscription> {

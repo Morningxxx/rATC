@@ -10,7 +10,7 @@ pub fn to_outbound(p: &Proxy) -> Result<Option<Value>> {
     }
     let v = match &p.ptype {
         ProxyType::Vless { uuid, network, tls, servername, flow, reality, ws } => {
-            let mut stream = json!({});
+            let mut stream = json!({"network": network});
             if *tls {
                 stream["security"] = if reality.is_some() { json!("reality") } else { json!("tls") };
                 if let Some(sn) = servername { stream["tlsSettings"] = json!({"serverName": sn}); }
@@ -105,9 +105,20 @@ mod tests {
         let p = proxy("name: a\nserver: 1.1.1.1\nport: 443\ntype: vless\nuuid: U\nnetwork: tcp\ntls: true\nservername: s.com\nreality-opts:\n  public-key: PK\n");
         let v = to_outbound(&p).unwrap().unwrap();
         assert_eq!(v["protocol"], "vless");
+        assert_eq!(v["streamSettings"]["network"], "tcp");
         assert_eq!(v["streamSettings"]["security"], "reality");
         assert_eq!(v["streamSettings"]["realitySettings"]["publicKey"], "PK");
         assert_eq!(v["tag"], "proxy");
+    }
+
+    #[test]
+    fn vless_ws_outbound_has_network() {
+        // Regression: vless+ws must carry streamSettings.network == "ws",
+        // otherwise xray defaults to tcp and ignores wsSettings.
+        let p = proxy("name: a\nserver: 1.1.1.1\nport: 443\ntype: vless\nuuid: U\nnetwork: ws\ntls: true\nservername: s.com\nws-opts:\n  path: /\n  headers:\n    Host: h.com\n");
+        let v = to_outbound(&p).unwrap().unwrap();
+        assert_eq!(v["streamSettings"]["network"], "ws");
+        assert_eq!(v["streamSettings"]["wsSettings"]["headers"]["Host"], "h.com");
     }
 
     #[test]

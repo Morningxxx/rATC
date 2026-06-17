@@ -30,9 +30,10 @@ impl XrayHandle {
         Ok(())
     }
 
-    /// Write config to the canonical path, then (re)spawn xray.
+    /// Write config to the canonical path, validate it with `xray -test`
+    /// (surfacing xray's stderr on rejection), then (re)spawn xray.
     pub fn start(&mut self, cfg: &Value) -> Result<()> {
-        self.write_config(cfg)?;
+        self.test_config(cfg)?;
         self.stop();
         let child = Command::new(&self.bin)
             .arg("-config")
@@ -51,6 +52,13 @@ impl XrayHandle {
         }
     }
 
+    /// Detach the running child so it survives this handle being dropped
+    /// (used to honor `exit_kills_xray = false`). Returns whether a child
+    /// was detached.
+    pub fn detach(&mut self) -> bool {
+        self.child.take().is_some()
+    }
+
     pub fn is_running(&mut self) -> bool {
         match self.child.as_mut() {
             Some(c) => match c.try_wait() {
@@ -65,6 +73,11 @@ impl XrayHandle {
         let p = xray_config_file();
         if let Some(parent) = p.parent() { std::fs::create_dir_all(parent)?; }
         std::fs::write(&p, serde_json::to_vec_pretty(cfg)?)?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o600)).ok();
+        }
         Ok(())
     }
 }

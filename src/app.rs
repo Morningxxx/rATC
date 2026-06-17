@@ -45,6 +45,27 @@ impl App {
         let fetcher = Fetcher::new(crate::store::paths::cache_dir())?;
         let parsed = fetcher.fetch(&entry.url)?;
         self.log(format!("subscription refreshed: {} proxies", parsed.proxies.len()));
+
+        // Best-effort: download each HTTP rule-provider so RULE-SET rules can be
+        // expanded into xray routing. Failures are non-fatal (the fallback rules
+        // still keep routing sane); they are logged and skipped.
+        self.ruleset_payloads.clear();
+        if let Ok(expander) = crate::converter::ruleset_expander::RuleSetExpander::new() {
+            for (name, rp) in &parsed.rule_providers {
+                if rp.kind != "http" {
+                    continue;
+                }
+                let Some(url) = &rp.url else { continue };
+                match expander.fetch_payload(url) {
+                    Ok(lines) => {
+                        self.log(format!("rule-set {name}: {} lines", lines.len()));
+                        self.ruleset_payloads.insert(name.clone(), lines);
+                    }
+                    Err(e) => self.log(format!("rule-set {name} download failed: {e}")),
+                }
+            }
+        }
+
         self.sub = Some(parsed);
         Ok(())
     }
@@ -82,5 +103,10 @@ impl App {
     fn log(&mut self, msg: String) {
         self.logs.push(msg);
         if self.logs.len() > 500 { self.logs.drain(0..100); }
+    }
+
+    /// Push a message onto the application log (shown in the Logs tab).
+    pub fn push_log(&mut self, msg: impl Into<String>) {
+        self.log(msg.into());
     }
 }

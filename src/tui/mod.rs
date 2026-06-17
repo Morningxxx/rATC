@@ -47,8 +47,8 @@ fn handle_key(app: &mut App, ui: &mut UiState, k: KeyEvent) -> bool {
         Char('3') => { ui.tab = Tab::Rules; false }
         Char('4') => { ui.tab = Tab::Logs; false }
         Char('5') => { ui.tab = Tab::Settings; false }
-        Char('r') => { let _ = app.refresh_subscription(); false }
-        Char('s') => { let _ = app.toggle_sys_proxy(); false }
+        Char('r') => { if let Err(e) = app.refresh_subscription() { app.push_log(format!("刷新订阅失败: {e}")); } false }
+        Char('s') => { if let Err(e) = app.toggle_sys_proxy() { app.push_log(format!("切换系统代理失败: {e}")); } false }
         Down | Char('j') => { ui.selected = ui.selected.saturating_add(1); false }
         Up | Char('k') => { if ui.selected > 0 { ui.selected -= 1; } false }
         Enter => {
@@ -56,7 +56,9 @@ fn handle_key(app: &mut App, ui: &mut UiState, k: KeyEvent) -> bool {
                 let proxies = app.supported_proxies();
                 if let Some(p) = proxies.get(ui.selected.min(proxies.len().saturating_sub(1))) {
                     let name = p.name.clone();
-                    let _ = app.select_proxy(&name);
+                    if let Err(e) = app.select_proxy(&name) {
+                        app.push_log(format!("切换节点失败 [{name}]: {e}"));
+                    }
                 }
             }
             false
