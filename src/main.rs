@@ -1,3 +1,4 @@
+mod config;
 mod converter;
 mod error;
 mod model;
