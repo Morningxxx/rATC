@@ -51,7 +51,7 @@ impl Rule {
             "GEOIP" => Rule::GeoIp(parts.get(1)?.to_lowercase(), target_of(parts.get(2)?)),
             "RULE-SET" => Rule::RuleSet(parts.get(1)?.to_string(), target_of(parts.get(2)?)),
             "MATCH" => Rule::Match(target_of(parts.get(1).unwrap_or(&"PROXY"))),
-            other => Rule::Unsupported(line.to_string(), target_of(parts.get(2).unwrap_or(&"PROXY"))),
+            _ => Rule::Unsupported(line.to_string(), target_of(parts.get(2).unwrap_or(&"PROXY"))),
         })
     }
 }
