@@ -18,6 +18,13 @@ fn main() -> ratc::error::Result<()> {
             eprintln!("未配置订阅。请运行: RATC_SUB_URL='http://...' ./ratc");
             eprintln!("或在首次启动前编辑 ~/.config/ratc/config.json");
         }
+    } else if let Ok(url) = std::env::var("RATC_SUB_URL") {
+        // Allow overriding the default subscription URL from the environment
+        // on every launch so users can update links without editing config.json.
+        if let Some(entry) = app.cfg.subscriptions.iter_mut().find(|e| e.name == "default") {
+            entry.url = url;
+        }
+        app.cfg.save()?;
     }
 
     app.refresh_subscription()?;
