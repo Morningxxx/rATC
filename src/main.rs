@@ -1,13 +1,5 @@
-mod config;
-mod converter;
-mod error;
-mod model;
-mod store;
-mod subscription;
-mod sysproxy;
-mod xray;
-
-fn main() -> error::Result<()> {
-    println!("rATC scaffold ok");
+fn main() -> ratc::error::Result<()> {
+    // Real wiring lands in a later task.
+    println!("rATC: core modules ready (TUI pending)");
     Ok(())
 }
