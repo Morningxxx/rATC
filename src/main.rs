@@ -29,9 +29,6 @@ fn main() -> ratc::error::Result<()> {
     }
     tui::run(&mut app)?;
 
-    // Honor the "exit kills xray" setting. If false, detach the xray child so
-    // it keeps running in the background after rATC exits (XrayHandle::Drop
-    // would otherwise kill it).
     if !app.cfg.exit_kills_xray {
         if let Some(x) = app.xray.as_mut() {
             if x.detach() {

@@ -15,6 +15,7 @@ impl Fetcher {
         let client = reqwest::blocking::Client::builder()
             .user_agent(UA)
             .timeout(std::time::Duration::from_secs(15))
+            .no_proxy()
             .build()?;
         Ok(Self { cache_dir, client })
     }
@@ -34,7 +35,21 @@ impl Fetcher {
                 let _ = self.write_cache(url, &text);
                 Ok(text)
             }
-            _ => self.read_cache(url),
+            Ok(resp) => {
+                // Network returned non-success; try cache, but surface original status if cache missing.
+                self.read_cache(url)
+                    .map_err(|e| crate::error::Error::Other(format!(
+                        "subscription fetch failed (HTTP {}) and cache unreadable: {}",
+                        resp.status(), e
+                    )))
+            }
+            Err(e) => {
+                // Network completely failed; try cache.
+                self.read_cache(url)
+                    .map_err(|cache_err| crate::error::Error::Other(format!(
+                        "subscription fetch failed: {e}; cache unreadable: {cache_err}"
+                    )))
+            }
         }
     }
 
