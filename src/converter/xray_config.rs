@@ -38,7 +38,12 @@ pub fn build_config(
     for r in &sub.rules {
         match convert(r) {
             Converted::Rule(v) => { rules.push(v); stats.rules_ok += 1; }
-            Converted::Match(v) => { rules.push(v); stats.rules_ok += 1; }
+            // MATCH is the catch-all. xray rejects matcher-less field rules, and
+            // the active node is always outbounds[0] (the default), so unmatched
+            // traffic already routes to proxy. We therefore drop MATCH rules
+            // rather than emit an invalid rule. (MATCH→direct is an unusual edge
+            // case not covered by MVP.)
+            Converted::Match(_) => { stats.rules_ok += 1; }
             Converted::RuleSet(name, target) => {
                 if let Some(lines) = ruleset_payloads.get(&name) {
                     let expanded = RuleSetExpander::expand(lines, target, group_names);
@@ -89,6 +94,6 @@ mod tests {
         assert_eq!(cfg["outbounds"][0]["protocol"], "vless");
         assert!(cfg["routing"]["rules"].as_array().unwrap().len() > 0);
         assert!(stats.rules_skipped >= 1);
-        assert!(stats.rules_fallback >= 4);
+        assert!(stats.rules_fallback >= 3);
     }
 }

@@ -41,11 +41,11 @@ impl RuleSetExpander {
                 Rule::parse(&normalized, group_names)
             })
             .filter_map(|r| match r {
-                Rule::Domain(v, _) => Some(json!({"domain": [v], "outboundTag": tag})),
-                Rule::DomainSuffix(v, _) => Some(json!({"domainSuffix": [v], "outboundTag": tag})),
-                Rule::DomainKeyword(v, _) => Some(json!({"domainKeyword": [v], "outboundTag": tag})),
-                Rule::IpCidr(v, _, _) => Some(json!({"ipCidr": [v], "outboundTag": tag})),
-                Rule::GeoIp(v, _) => Some(json!({"geoIp": v, "outboundTag": tag})),
+                Rule::Domain(v, _) => Some(json!({"domain": [format!("full:{v}")], "outboundTag": tag})),
+                Rule::DomainSuffix(v, _) => Some(json!({"domain": [format!("domain:{v}")], "outboundTag": tag})),
+                Rule::DomainKeyword(v, _) => Some(json!({"domain": [format!("keyword:{v}")], "outboundTag": tag})),
+                Rule::IpCidr(v, _, _) => Some(json!({"ip": [v], "outboundTag": tag})),
+                Rule::GeoIp(v, _) => Some(json!({"ip": [format!("geoip:{v}")], "outboundTag": tag})),
                 _ => None,
             })
             .collect()
@@ -66,8 +66,8 @@ mod tests {
         ];
         let v = RuleSetExpander::expand(&lines, Target::Direct, &HashSet::new());
         assert_eq!(v.len(), 3);
-        assert_eq!(v[0]["domainSuffix"][0], "baidu.com");
+        assert_eq!(v[0]["domain"][0], "domain:baidu.com");
         assert_eq!(v[0]["outboundTag"], "direct");
-        assert_eq!(v[2]["ipCidr"][0], "1.2.3.0/24");
+        assert_eq!(v[2]["ip"][0], "1.2.3.0/24");
     }
 }

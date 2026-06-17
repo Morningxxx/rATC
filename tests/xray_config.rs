@@ -15,11 +15,19 @@ fn generated_config_passes_xray_test() {
     let (cfg, _stats) = build_config(&sub, active, 7890, 7891, &Default::default()).unwrap();
     // ensure proxy outbound present
     assert!(to_outbound(active).unwrap().is_some());
-    // run xray -test
-    let tmp = tempfile::NamedTempFile::new().unwrap();
+    // run xray -test. xray infers config format from the file extension, so the
+    // temp file MUST end in .json (an extensionless file is rejected with
+    // "Failed to get format").
+    let tmp = tempfile::Builder::new().suffix(".json").tempfile().unwrap();
     std::fs::write(tmp.path(), serde_json::to_vec_pretty(&cfg).unwrap()).unwrap();
     let out = std::process::Command::new(bin)
         .arg("-test").arg("-config").arg(tmp.path())
         .output().unwrap();
-    assert!(out.status.success(), "xray stderr: {}", String::from_utf8_lossy(&out.stderr));
+    assert!(
+        out.status.success(),
+        "xray rejected generated config\nexit: {:?}\nstdout: {}\nstderr: {}",
+        out.status.code(),
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr),
+    );
 }
