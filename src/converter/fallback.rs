@@ -32,8 +32,11 @@ mod tests {
             );
         }
         // geoip encoded inside the `ip` field as "geoip:cn"
-        assert!(r.iter().any(|x| x.get("ip").and_then(|v| v.as_array())
-            .map(|a| a.iter().any(|e| e == "geoip:cn")).unwrap_or(false)));
+        assert!(r.iter().any(|x| x
+            .get("ip")
+            .and_then(|v| v.as_array())
+            .map(|a| a.iter().any(|e| e == "geoip:cn"))
+            .unwrap_or(false)));
         assert!(r.iter().any(|x| x.get("domain").is_some()));
     }
 }

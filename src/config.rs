@@ -29,7 +29,9 @@ pub struct AppConfig {
     pub subscriptions: Vec<SubscriptionEntry>,
 }
 
-fn default_true() -> bool { true }
+fn default_true() -> bool {
+    true
+}
 
 impl Default for AppConfig {
     fn default() -> Self {
@@ -74,7 +76,10 @@ impl AppConfig {
         Ok(())
     }
     pub fn active_subscription(&self) -> Option<&SubscriptionEntry> {
-        self.subscriptions.iter().find(|s| s.active).or_else(|| self.subscriptions.first())
+        self.subscriptions
+            .iter()
+            .find(|s| s.active)
+            .or_else(|| self.subscriptions.first())
     }
 }
 
@@ -95,8 +100,16 @@ mod tests {
     fn active_subscription_prefers_flag() {
         let cfg = AppConfig {
             subscriptions: vec![
-                SubscriptionEntry { name: "a".into(), url: "u1".into(), active: false },
-                SubscriptionEntry { name: "b".into(), url: "u2".into(), active: true },
+                SubscriptionEntry {
+                    name: "a".into(),
+                    url: "u1".into(),
+                    active: false,
+                },
+                SubscriptionEntry {
+                    name: "b".into(),
+                    url: "u2".into(),
+                    active: true,
+                },
             ],
             ..Default::default()
         };

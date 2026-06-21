@@ -1,7 +1,7 @@
-use serde::Deserialize;
 use crate::model::proxy::RawProxy;
 use crate::model::proxy_group::ProxyGroup;
 use crate::model::rule_provider::RuleProvider;
+use serde::Deserialize;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Deserialize)]

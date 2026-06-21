@@ -12,7 +12,8 @@ pub struct XrayHandle {
 
 impl XrayHandle {
     pub fn new(bin_path: &str) -> Result<Self> {
-        let bin = resolve(bin_path).ok_or_else(|| Error::Xray(format!("xray binary not found: {bin_path}")))?;
+        let bin = resolve(bin_path)
+            .ok_or_else(|| Error::Xray(format!("xray binary not found: {bin_path}")))?;
         Ok(Self { child: None, bin })
     }
 
@@ -25,7 +26,9 @@ impl XrayHandle {
             .arg(xray_config_file())
             .output()?;
         if !out.status.success() {
-            return Err(Error::Xray(String::from_utf8_lossy(&out.stderr).to_string()));
+            return Err(Error::Xray(
+                String::from_utf8_lossy(&out.stderr).to_string(),
+            ));
         }
         Ok(())
     }
@@ -61,17 +64,16 @@ impl XrayHandle {
 
     pub fn is_running(&mut self) -> bool {
         match self.child.as_mut() {
-            Some(c) => match c.try_wait() {
-                Ok(None) => true,
-                _ => false,
-            },
+            Some(c) => matches!(c.try_wait(), Ok(None)),
             None => false,
         }
     }
 
     fn write_config(&self, cfg: &Value) -> Result<()> {
         let p = xray_config_file();
-        if let Some(parent) = p.parent() { std::fs::create_dir_all(parent)?; }
+        if let Some(parent) = p.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
         std::fs::write(&p, serde_json::to_vec_pretty(cfg)?)?;
         #[cfg(unix)]
         {
@@ -83,7 +85,9 @@ impl XrayHandle {
 }
 
 impl Drop for XrayHandle {
-    fn drop(&mut self) { self.stop(); }
+    fn drop(&mut self) {
+        self.stop();
+    }
 }
 
 #[cfg(test)]
@@ -97,13 +101,18 @@ mod tests {
         let prev = std::env::var_os("XDG_CONFIG_HOME");
         std::env::set_var("XDG_CONFIG_HOME", tmp.path());
         f();
-        match prev { Some(v) => std::env::set_var("XDG_CONFIG_HOME", v), None => std::env::remove_var("XDG_CONFIG_HOME") }
+        match prev {
+            Some(v) => std::env::set_var("XDG_CONFIG_HOME", v),
+            None => std::env::remove_var("XDG_CONFIG_HOME"),
+        }
     }
 
     #[test]
     fn test_config_validates_with_real_xray() {
         let bin = resolve("/usr/local/bin/xray");
-        if bin.is_none() { return; } // skip if xray absent
+        if bin.is_none() {
+            return;
+        } // skip if xray absent
         with_tmp_home(|| {
             let h = XrayHandle::new("/usr/local/bin/xray").unwrap();
             let cfg = json!({

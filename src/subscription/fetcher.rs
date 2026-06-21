@@ -37,18 +37,21 @@ impl Fetcher {
             }
             Ok(resp) => {
                 // Network returned non-success; try cache, but surface original status if cache missing.
-                self.read_cache(url)
-                    .map_err(|e| crate::error::Error::Other(format!(
+                self.read_cache(url).map_err(|e| {
+                    crate::error::Error::Other(format!(
                         "subscription fetch failed (HTTP {}) and cache unreadable: {}",
-                        resp.status(), e
-                    )))
+                        resp.status(),
+                        e
+                    ))
+                })
             }
             Err(e) => {
                 // Network completely failed; try cache.
-                self.read_cache(url)
-                    .map_err(|cache_err| crate::error::Error::Other(format!(
+                self.read_cache(url).map_err(|cache_err| {
+                    crate::error::Error::Other(format!(
                         "subscription fetch failed: {e}; cache unreadable: {cache_err}"
-                    )))
+                    ))
+                })
             }
         }
     }
@@ -88,7 +91,8 @@ mod tests {
     fn fetch_then_cache_hit() {
         let mut server = mockito::Server::new();
         let body = "proxies: []\nrules: []\n";
-        let _m = server.mock("GET", "/")
+        let _m = server
+            .mock("GET", "/")
             .with_status(200)
             .with_body(body)
             .create();

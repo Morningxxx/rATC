@@ -11,7 +11,9 @@ fn main() -> ratc::error::Result<()> {
     if app.cfg.subscriptions.is_empty() {
         if let Ok(url) = std::env::var("RATC_SUB_URL") {
             app.cfg.subscriptions.push(ratc::config::SubscriptionEntry {
-                name: "default".into(), url, active: true,
+                name: "default".into(),
+                url,
+                active: true,
             });
             app.cfg.save()?;
         } else {
@@ -21,7 +23,12 @@ fn main() -> ratc::error::Result<()> {
     } else if let Ok(url) = std::env::var("RATC_SUB_URL") {
         // Allow overriding the default subscription URL from the environment
         // on every launch so users can update links without editing config.json.
-        if let Some(entry) = app.cfg.subscriptions.iter_mut().find(|e| e.name == "default") {
+        if let Some(entry) = app
+            .cfg
+            .subscriptions
+            .iter_mut()
+            .find(|e| e.name == "default")
+        {
             entry.url = url;
         }
         app.cfg.save()?;

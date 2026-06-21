@@ -20,12 +20,14 @@ pub struct ParsedSubscription {
 }
 
 pub fn parse(text: &str) -> Result<ParsedSubscription> {
-    let cfg: ClashConfig = serde_yaml::from_str(text)
-        .map_err(|e| Error::Parse(format!("yaml: {e}")))?;
+    let cfg: ClashConfig =
+        serde_yaml::from_str(text).map_err(|e| Error::Parse(format!("yaml: {e}")))?;
     let group_names: HashSet<String> = cfg.proxy_groups.iter().map(|g| g.name.clone()).collect();
     let proxies: Vec<Proxy> = cfg.proxies.iter().filter_map(classify).collect();
     let skipped = cfg.proxies.len().saturating_sub(proxies.len());
-    let rules: Vec<Rule> = cfg.rules.iter()
+    let rules: Vec<Rule> = cfg
+        .rules
+        .iter()
         .filter_map(|line| Rule::parse(line, &group_names))
         .collect();
     Ok(ParsedSubscription {
@@ -72,7 +74,11 @@ mod tests {
     #[test]
     fn compat_counts() {
         let p = parse(&fixture()).unwrap();
-        let supported = p.proxies.iter().filter(|x| x.compat() == Compat::Supported).count();
+        let supported = p
+            .proxies
+            .iter()
+            .filter(|x| x.compat() == Compat::Supported)
+            .count();
         // US-Xr1(vless), JP-Ws(vmess), TW-Trojan(trojan) → 3 supported
         assert_eq!(supported, 3);
     }
@@ -80,8 +86,14 @@ mod tests {
     #[test]
     fn rules_parsed() {
         let p = parse(&fixture()).unwrap();
-        assert!(p.rules.iter().any(|r| matches!(r, Rule::DomainSuffix(d, Target::Direct) if d=="cn")));
-        assert!(p.rules.iter().any(|r| matches!(r, Rule::RuleSet(n, Target::Direct) if n=="CNdirect1")));
+        assert!(p
+            .rules
+            .iter()
+            .any(|r| matches!(r, Rule::DomainSuffix(d, Target::Direct) if d=="cn")));
+        assert!(p
+            .rules
+            .iter()
+            .any(|r| matches!(r, Rule::RuleSet(n, Target::Direct) if n=="CNdirect1")));
         assert!(p.rules.iter().any(|r| matches!(r, Rule::Unsupported(_, _))));
     }
 }

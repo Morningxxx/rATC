@@ -1,7 +1,7 @@
+use crate::converter::fallback::fallback_rules;
 use crate::converter::proxy_converter::to_outbound;
 use crate::converter::rule_converter::{convert, Converted};
 use crate::converter::ruleset_expander::RuleSetExpander;
-use crate::converter::fallback::fallback_rules;
 use crate::error::Result;
 use crate::model::proxy::Proxy;
 use crate::subscription::parser::ParsedSubscription;
@@ -24,7 +24,8 @@ pub fn build_config(
     socks_port: u16,
     ruleset_payloads: &HashMap<String, Vec<String>>,
 ) -> Result<(Value, ConvertStats)> {
-    let proxy_outbound = to_outbound(active)?.unwrap_or_else(|| json!({"tag":"proxy","protocol":"blackhole"}));
+    let proxy_outbound =
+        to_outbound(active)?.unwrap_or_else(|| json!({"tag":"proxy","protocol":"blackhole"}));
     let outbounds = vec![
         proxy_outbound,
         json!({"tag": "direct", "protocol": "freedom"}),
@@ -37,13 +38,18 @@ pub fn build_config(
 
     for r in &sub.rules {
         match convert(r) {
-            Converted::Rule(v) => { rules.push(v); stats.rules_ok += 1; }
+            Converted::Rule(v) => {
+                rules.push(v);
+                stats.rules_ok += 1;
+            }
             // MATCH is the catch-all. xray rejects matcher-less field rules, and
             // the active node is always outbounds[0] (the default), so unmatched
             // traffic already routes to proxy. We therefore drop MATCH rules
             // rather than emit an invalid rule. (MATCH→direct is an unusual edge
             // case not covered by MVP.)
-            Converted::Match(_) => { stats.rules_ok += 1; }
+            Converted::Match(_) => {
+                stats.rules_ok += 1;
+            }
             Converted::RuleSet(name, target) => {
                 if let Some(lines) = ruleset_payloads.get(&name) {
                     let expanded = RuleSetExpander::expand(lines, target, group_names);
@@ -51,7 +57,9 @@ pub fn build_config(
                     rules.extend(expanded);
                 }
             }
-            Converted::Skipped(_) => { stats.rules_skipped += 1; }
+            Converted::Skipped(_) => {
+                stats.rules_skipped += 1;
+            }
         }
     }
 
@@ -79,7 +87,8 @@ mod tests {
 
     fn fixture() -> ParsedSubscription {
         let text = std::fs::read_to_string("tests/fixtures/clash_meta.yaml")
-            .or_else(|_| std::fs::read_to_string("../tests/fixtures/clash_meta.yaml")).unwrap();
+            .or_else(|_| std::fs::read_to_string("../tests/fixtures/clash_meta.yaml"))
+            .unwrap();
         parse(&text).unwrap()
     }
 
@@ -92,7 +101,7 @@ mod tests {
         assert_eq!(cfg["inbounds"][1]["protocol"], "socks");
         assert_eq!(cfg["outbounds"][0]["tag"], "proxy");
         assert_eq!(cfg["outbounds"][0]["protocol"], "vless");
-        assert!(cfg["routing"]["rules"].as_array().unwrap().len() > 0);
+        assert!(!cfg["routing"]["rules"].as_array().unwrap().is_empty());
         assert!(stats.rules_skipped >= 1);
         assert!(stats.rules_fallback >= 3);
     }

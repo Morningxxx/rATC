@@ -7,12 +7,24 @@ pub fn config_dir() -> PathBuf {
         .join("ratc")
 }
 
-pub fn cache_dir() -> PathBuf { config_dir().join("cache") }
-pub fn ruleset_dir() -> PathBuf { config_dir().join("ruleset") }
-pub fn logs_dir() -> PathBuf { config_dir().join("logs") }
-pub fn config_file() -> PathBuf { config_dir().join("config.json") }
-pub fn proxy_sh() -> PathBuf { config_dir().join("proxy.sh") }
-pub fn xray_config_file() -> PathBuf { config_dir().join("xray.json") }
+pub fn cache_dir() -> PathBuf {
+    config_dir().join("cache")
+}
+pub fn ruleset_dir() -> PathBuf {
+    config_dir().join("ruleset")
+}
+pub fn logs_dir() -> PathBuf {
+    config_dir().join("logs")
+}
+pub fn config_file() -> PathBuf {
+    config_dir().join("config.json")
+}
+pub fn proxy_sh() -> PathBuf {
+    config_dir().join("proxy.sh")
+}
+pub fn xray_config_file() -> PathBuf {
+    config_dir().join("xray.json")
+}
 
 /// Ensure all runtime directories exist with secure perms (0700).
 pub fn ensure_dirs() -> std::io::Result<()> {

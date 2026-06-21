@@ -9,7 +9,9 @@ fn fixture() -> String {
 #[test]
 fn generated_config_passes_xray_test() {
     let bin = std::path::Path::new("/usr/local/bin/xray");
-    if !bin.is_file() { return; }
+    if !bin.is_file() {
+        return;
+    }
     let sub = parse(&fixture()).unwrap();
     let active = sub.proxies.iter().find(|p| p.name == "US-Xr1").unwrap();
     let (cfg, _stats) = build_config(&sub, active, 7890, 7891, &Default::default()).unwrap();
@@ -21,8 +23,11 @@ fn generated_config_passes_xray_test() {
     let tmp = tempfile::Builder::new().suffix(".json").tempfile().unwrap();
     std::fs::write(tmp.path(), serde_json::to_vec_pretty(&cfg).unwrap()).unwrap();
     let out = std::process::Command::new(bin)
-        .arg("-test").arg("-config").arg(tmp.path())
-        .output().unwrap();
+        .arg("-test")
+        .arg("-config")
+        .arg(tmp.path())
+        .output()
+        .unwrap();
     assert!(
         out.status.success(),
         "xray rejected generated config\nexit: {:?}\nstdout: {}\nstderr: {}",

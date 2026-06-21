@@ -30,7 +30,9 @@ impl ProxyGroup {
     /// carries an info keyword is treated as an info entry, not a real group.
     pub fn as_info(&self) -> Option<InfoEntry> {
         let n = self.name.as_str();
-        let is_info = ["流量", "到期", "套餐", "客服", "续费"].iter().any(|k| n.contains(k));
+        let is_info = ["流量", "到期", "套餐", "客服", "续费"]
+            .iter()
+            .any(|k| n.contains(k));
         if matches!(self.kind, GroupType::Select)
             && self.proxies.iter().all(|p| p == "DIRECT")
             && is_info

@@ -41,8 +41,12 @@ impl Rule {
         };
         Some(match parts[0] {
             "DOMAIN" => Rule::Domain(parts.get(1)?.to_string(), target_of(parts.get(2)?)),
-            "DOMAIN-SUFFIX" => Rule::DomainSuffix(parts.get(1)?.to_string(), target_of(parts.get(2)?)),
-            "DOMAIN-KEYWORD" => Rule::DomainKeyword(parts.get(1)?.to_string(), target_of(parts.get(2)?)),
+            "DOMAIN-SUFFIX" => {
+                Rule::DomainSuffix(parts.get(1)?.to_string(), target_of(parts.get(2)?))
+            }
+            "DOMAIN-KEYWORD" => {
+                Rule::DomainKeyword(parts.get(1)?.to_string(), target_of(parts.get(2)?))
+            }
             "IP-CIDR" | "IP-CIDR6" => Rule::IpCidr(
                 parts.get(1)?.to_string(),
                 target_of(parts.get(2)?),
@@ -51,7 +55,10 @@ impl Rule {
             "GEOIP" => Rule::GeoIp(parts.get(1)?.to_lowercase(), target_of(parts.get(2)?)),
             "RULE-SET" => Rule::RuleSet(parts.get(1)?.to_string(), target_of(parts.get(2)?)),
             "MATCH" => Rule::Match(target_of(parts.get(1).unwrap_or(&"PROXY"))),
-            _ => Rule::Unsupported(line.to_string(), target_of(parts.get(2).unwrap_or(&"PROXY"))),
+            _ => Rule::Unsupported(
+                line.to_string(),
+                target_of(parts.get(2).unwrap_or(&"PROXY")),
+            ),
         })
     }
 }

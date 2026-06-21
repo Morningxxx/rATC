@@ -1,6 +1,6 @@
-use serde::Deserialize;
 #[allow(unused_imports)]
 pub use crate::model::rule_set_file::RuleSetFile;
+use serde::Deserialize;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct RuleProvider {

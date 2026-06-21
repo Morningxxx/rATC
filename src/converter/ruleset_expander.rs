@@ -31,21 +31,34 @@ impl RuleSetExpander {
     /// given target. Lines that fail to parse are skipped.
     pub fn expand(lines: &[String], target: Target, group_names: &HashSet<String>) -> Vec<Value> {
         let tag = target_tag(target);
-        lines.iter()
+        lines
+            .iter()
             .filter_map(|l| {
                 // classical rule-set payload lines omit the target field that
                 // Rule::parse requires; supply a placeholder so they classify
                 // (the target is overridden by `target` below).
                 let l = l.trim();
-                let normalized = if l.split(',').count() < 3 { format!("{l},DIRECT") } else { l.to_string() };
+                let normalized = if l.split(',').count() < 3 {
+                    format!("{l},DIRECT")
+                } else {
+                    l.to_string()
+                };
                 Rule::parse(&normalized, group_names)
             })
             .filter_map(|r| match r {
-                Rule::Domain(v, _) => Some(json!({"domain": [format!("full:{v}")], "outboundTag": tag})),
-                Rule::DomainSuffix(v, _) => Some(json!({"domain": [format!("domain:{v}")], "outboundTag": tag})),
-                Rule::DomainKeyword(v, _) => Some(json!({"domain": [format!("keyword:{v}")], "outboundTag": tag})),
+                Rule::Domain(v, _) => {
+                    Some(json!({"domain": [format!("full:{v}")], "outboundTag": tag}))
+                }
+                Rule::DomainSuffix(v, _) => {
+                    Some(json!({"domain": [format!("domain:{v}")], "outboundTag": tag}))
+                }
+                Rule::DomainKeyword(v, _) => {
+                    Some(json!({"domain": [format!("keyword:{v}")], "outboundTag": tag}))
+                }
                 Rule::IpCidr(v, _, _) => Some(json!({"ip": [v], "outboundTag": tag})),
-                Rule::GeoIp(v, _) => Some(json!({"ip": [format!("geoip:{v}")], "outboundTag": tag})),
+                Rule::GeoIp(v, _) => {
+                    Some(json!({"ip": [format!("geoip:{v}")], "outboundTag": tag}))
+                }
                 _ => None,
             })
             .collect()

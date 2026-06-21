@@ -21,11 +21,19 @@ pub fn convert(rule: &Rule) -> Converted {
     //   - xray uses `ip` for both CIDR entries and `geoip:XX` entries; there is no
     //     ipCidr or geoIp field. Verified empirically against xray-core 1.8.24.
     match rule {
-        Rule::Domain(v, t) => Converted::Rule(json!({"domain": [format!("full:{v}")], "outboundTag": target_tag(*t)})),
-        Rule::DomainSuffix(v, t) => Converted::Rule(json!({"domain": [format!("domain:{v}")], "outboundTag": target_tag(*t)})),
-        Rule::DomainKeyword(v, t) => Converted::Rule(json!({"domain": [format!("keyword:{v}")], "outboundTag": target_tag(*t)})),
+        Rule::Domain(v, t) => {
+            Converted::Rule(json!({"domain": [format!("full:{v}")], "outboundTag": target_tag(*t)}))
+        }
+        Rule::DomainSuffix(v, t) => Converted::Rule(
+            json!({"domain": [format!("domain:{v}")], "outboundTag": target_tag(*t)}),
+        ),
+        Rule::DomainKeyword(v, t) => Converted::Rule(
+            json!({"domain": [format!("keyword:{v}")], "outboundTag": target_tag(*t)}),
+        ),
         Rule::IpCidr(v, t, _) => Converted::Rule(json!({"ip": [v], "outboundTag": target_tag(*t)})),
-        Rule::GeoIp(v, t) => Converted::Rule(json!({"ip": [format!("geoip:{v}")], "outboundTag": target_tag(*t)})),
+        Rule::GeoIp(v, t) => {
+            Converted::Rule(json!({"ip": [format!("geoip:{v}")], "outboundTag": target_tag(*t)}))
+        }
         Rule::RuleSet(name, t) => Converted::RuleSet(name.clone(), *t),
         Rule::Match(t) => Converted::Match(json!({"type": "field", "outboundTag": target_tag(*t)})),
         Rule::Unsupported(text, _) => Converted::Skipped(text.clone()),
@@ -44,7 +52,9 @@ mod tests {
         if let Converted::Rule(v) = convert(&r) {
             assert_eq!(v["domain"][0], "domain:cn");
             assert_eq!(v["outboundTag"], "direct");
-        } else { panic!(); }
+        } else {
+            panic!();
+        }
     }
 
     #[test]
@@ -52,7 +62,9 @@ mod tests {
         let r = Rule::parse("IP-CIDR,10.0.0.0/8,DIRECT,no-resolve", &HashSet::new()).unwrap();
         if let Converted::Rule(v) = convert(&r) {
             assert_eq!(v["ip"][0], "10.0.0.0/8");
-        } else { panic!(); }
+        } else {
+            panic!();
+        }
     }
 
     #[test]

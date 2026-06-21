@@ -38,9 +38,7 @@ pub enum ProxyType {
         sni: Option<String>,
     },
     /// Catch-all for protocols we store but cannot convert (e.g. hysteria2).
-    Unsupported {
-        kind: String,
-    },
+    Unsupported { kind: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
@@ -91,9 +89,9 @@ impl Proxy {
     pub fn compat(&self) -> Compat {
         match &self.ptype {
             ProxyType::Unsupported { .. } => Compat::Unsupported("protocol not supported by xray"),
-            ProxyType::Shadowsocks { plugin: Some(_), .. } => {
-                Compat::Unsupported("shadowsocks plugins (shadow-tls) not supported by xray")
-            }
+            ProxyType::Shadowsocks {
+                plugin: Some(_), ..
+            } => Compat::Unsupported("shadowsocks plugins (shadow-tls) not supported by xray"),
             _ => Compat::Supported,
         }
     }
@@ -107,7 +105,7 @@ pub fn classify(raw: &RawProxy) -> Option<Proxy> {
     }
     let port = raw.port.unwrap();
 
-    let g = |k: &str| raw.fields.get(&Value::String(k.into())).cloned();
+    let g = |k: &str| raw.fields.get(Value::String(k.into())).cloned();
     let gs = |k: &str| g(k).and_then(|v| v.as_str().map(String::from));
     let gn = |k: &str| g(k).and_then(|v| v.as_u64()).map(|n| n as u32);
     let gb = |k: &str| g(k).and_then(|v| v.as_bool()).unwrap_or(false);
@@ -133,9 +131,13 @@ pub fn classify(raw: &RawProxy) -> Option<Proxy> {
         "ss" => ProxyType::Shadowsocks {
             password: gs("password").unwrap_or_default(),
             cipher: gs("cipher").unwrap_or_default(),
-            plugin: g("plugin").and_then(|_| raw.fields.get(&Value::String("plugin-opts".into())).map(|_| PluginOpts {
-                plugin_opts: g("plugin-opts").unwrap_or(Value::Null),
-            })),
+            plugin: g("plugin").and_then(|_| {
+                raw.fields
+                    .get(Value::String("plugin-opts".into()))
+                    .map(|_| PluginOpts {
+                        plugin_opts: g("plugin-opts").unwrap_or(Value::Null),
+                    })
+            }),
         },
         "trojan" => ProxyType::Trojan {
             password: gs("password").unwrap_or_default(),
@@ -143,7 +145,12 @@ pub fn classify(raw: &RawProxy) -> Option<Proxy> {
         },
         other => ProxyType::Unsupported { kind: other.into() },
     };
-    Some(Proxy { name: raw.name.clone(), server: raw.server.clone(), port, ptype })
+    Some(Proxy {
+        name: raw.name.clone(),
+        server: raw.server.clone(),
+        port,
+        ptype,
+    })
 }
 
 #[cfg(test)]

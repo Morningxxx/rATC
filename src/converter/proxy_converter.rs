@@ -9,11 +9,25 @@ pub fn to_outbound(p: &Proxy) -> Result<Option<Value>> {
         return Ok(None);
     }
     let v = match &p.ptype {
-        ProxyType::Vless { uuid, network, tls, servername, flow, reality, ws } => {
+        ProxyType::Vless {
+            uuid,
+            network,
+            tls,
+            servername,
+            flow,
+            reality,
+            ws,
+        } => {
             let mut stream = json!({"network": network});
             if *tls {
-                stream["security"] = if reality.is_some() { json!("reality") } else { json!("tls") };
-                if let Some(sn) = servername { stream["tlsSettings"] = json!({"serverName": sn}); }
+                stream["security"] = if reality.is_some() {
+                    json!("reality")
+                } else {
+                    json!("tls")
+                };
+                if let Some(sn) = servername {
+                    stream["tlsSettings"] = json!({"serverName": sn});
+                }
                 if let Some(r) = reality {
                     stream["realitySettings"] = json!({
                         "serverName": servername,
@@ -26,8 +40,12 @@ pub fn to_outbound(p: &Proxy) -> Result<Option<Value>> {
             if *network == "ws" {
                 if let Some(w) = ws {
                     let mut ws_settings = json!({});
-                    if let Some(path) = &w.path { ws_settings["path"] = json!(path); }
-                    if let Some(h) = &w.headers { ws_settings["headers"] = json!(h); }
+                    if let Some(path) = &w.path {
+                        ws_settings["path"] = json!(path);
+                    }
+                    if let Some(h) = &w.headers {
+                        ws_settings["headers"] = json!(h);
+                    }
                     stream["wsSettings"] = ws_settings;
                 }
             }
@@ -40,17 +58,31 @@ pub fn to_outbound(p: &Proxy) -> Result<Option<Value>> {
                 "streamSettings": stream
             })
         }
-        ProxyType::Vmess { uuid, alter_id, cipher, network, tls, servername, ws } => {
+        ProxyType::Vmess {
+            uuid,
+            alter_id,
+            cipher,
+            network,
+            tls,
+            servername,
+            ws,
+        } => {
             let mut stream = json!({"network": network});
             if *tls {
                 stream["security"] = json!("tls");
-                if let Some(sn) = servername { stream["tlsSettings"] = json!({"serverName": sn, "allowInsecure": true}); }
+                if let Some(sn) = servername {
+                    stream["tlsSettings"] = json!({"serverName": sn, "allowInsecure": true});
+                }
             }
             if *network == "ws" {
                 if let Some(w) = ws {
                     let mut ws_settings = json!({});
-                    if let Some(path) = &w.path { ws_settings["path"] = json!(path); }
-                    if let Some(h) = &w.headers { ws_settings["headers"] = json!(h); }
+                    if let Some(path) = &w.path {
+                        ws_settings["path"] = json!(path);
+                    }
+                    if let Some(h) = &w.headers {
+                        ws_settings["headers"] = json!(h);
+                    }
                     stream["wsSettings"] = ws_settings;
                 }
             }
@@ -63,7 +95,11 @@ pub fn to_outbound(p: &Proxy) -> Result<Option<Value>> {
                 "streamSettings": stream
             })
         }
-        ProxyType::Shadowsocks { password, cipher, plugin: None } => {
+        ProxyType::Shadowsocks {
+            password,
+            cipher,
+            plugin: None,
+        } => {
             json!({
                 "tag": "proxy",
                 "protocol": "shadowsocks",
@@ -72,7 +108,9 @@ pub fn to_outbound(p: &Proxy) -> Result<Option<Value>> {
         }
         ProxyType::Trojan { password, sni } => {
             let mut stream = json!({"security": "tls"});
-            if let Some(s) = sni { stream["tlsSettings"] = json!({"serverName": s}); }
+            if let Some(s) = sni {
+                stream["tlsSettings"] = json!({"serverName": s});
+            }
             json!({
                 "tag": "proxy",
                 "protocol": "trojan",
@@ -80,7 +118,10 @@ pub fn to_outbound(p: &Proxy) -> Result<Option<Value>> {
                 "streamSettings": stream
             })
         }
-        ProxyType::Shadowsocks { plugin: Some(_), .. } | ProxyType::Unsupported { .. } => {
+        ProxyType::Shadowsocks {
+            plugin: Some(_), ..
+        }
+        | ProxyType::Unsupported { .. } => {
             return Ok(None);
         }
     };
@@ -118,7 +159,10 @@ mod tests {
         let p = proxy("name: a\nserver: 1.1.1.1\nport: 443\ntype: vless\nuuid: U\nnetwork: ws\ntls: true\nservername: s.com\nws-opts:\n  path: /\n  headers:\n    Host: h.com\n");
         let v = to_outbound(&p).unwrap().unwrap();
         assert_eq!(v["streamSettings"]["network"], "ws");
-        assert_eq!(v["streamSettings"]["wsSettings"]["headers"]["Host"], "h.com");
+        assert_eq!(
+            v["streamSettings"]["wsSettings"]["headers"]["Host"],
+            "h.com"
+        );
     }
 
     #[test]
@@ -127,12 +171,16 @@ mod tests {
         let v = to_outbound(&p).unwrap().unwrap();
         assert_eq!(v["protocol"], "vmess");
         assert_eq!(v["streamSettings"]["network"], "ws");
-        assert_eq!(v["streamSettings"]["wsSettings"]["headers"]["Host"], "h.com");
+        assert_eq!(
+            v["streamSettings"]["wsSettings"]["headers"]["Host"],
+            "h.com"
+        );
     }
 
     #[test]
     fn trojan_outbound() {
-        let p = proxy("name: a\nserver: 1.1.1.1\nport: 443\ntype: trojan\npassword: P\nsni: s.com\n");
+        let p =
+            proxy("name: a\nserver: 1.1.1.1\nport: 443\ntype: trojan\npassword: P\nsni: s.com\n");
         let v = to_outbound(&p).unwrap().unwrap();
         assert_eq!(v["protocol"], "trojan");
         assert_eq!(v["streamSettings"]["tlsSettings"]["serverName"], "s.com");

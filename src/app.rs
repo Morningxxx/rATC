@@ -33,8 +33,14 @@ impl App {
     }
 
     pub fn supported_proxies(&self) -> Vec<&Proxy> {
-        self.sub.as_ref()
-            .map(|s| s.proxies.iter().filter(|p| p.compat() == Compat::Supported).collect())
+        self.sub
+            .as_ref()
+            .map(|s| {
+                s.proxies
+                    .iter()
+                    .filter(|p| p.compat() == Compat::Supported)
+                    .collect()
+            })
             .unwrap_or_default()
     }
 
@@ -44,7 +50,11 @@ impl App {
         };
         let fetcher = Fetcher::new(crate::store::paths::cache_dir())?;
         let parsed = fetcher.fetch(&entry.url)?;
-        self.log(format!("subscription refreshed: {} proxies ({} skipped)", parsed.proxies.len(), parsed.skipped_proxies));
+        self.log(format!(
+            "subscription refreshed: {} proxies ({} skipped)",
+            parsed.proxies.len(),
+            parsed.skipped_proxies
+        ));
 
         // Best-effort: download each HTTP rule-provider so RULE-SET rules can be
         // expanded into xray routing. Failures are non-fatal (the fallback rules
@@ -72,13 +82,27 @@ impl App {
 
     /// Select the active proxy by name and (re)start xray with the new config.
     pub fn select_proxy(&mut self, name: &str) -> Result<()> {
-        let sub = match &self.sub { Some(s) => s, None => return Ok(()) };
-        let proxy = sub.proxies.iter().find(|p| p.name == name)
+        let sub = match &self.sub {
+            Some(s) => s,
+            None => return Ok(()),
+        };
+        let proxy = sub
+            .proxies
+            .iter()
+            .find(|p| p.name == name)
             .ok_or_else(|| crate::error::Error::Other(format!("proxy not found: {name}")))?;
         if !matches!(proxy.compat(), Compat::Supported) {
-            return Err(crate::error::Error::Other(format!("proxy not supported: {name}")));
+            return Err(crate::error::Error::Other(format!(
+                "proxy not supported: {name}"
+            )));
         }
-        let (cfg, stats) = build_config(sub, proxy, self.cfg.http_port, self.cfg.socks_port, &self.ruleset_payloads)?;
+        let (cfg, stats) = build_config(
+            sub,
+            proxy,
+            self.cfg.http_port,
+            self.cfg.socks_port,
+            &self.ruleset_payloads,
+        )?;
         self.last_stats = stats;
         if let Some(x) = self.xray.as_mut() {
             x.start(&cfg)?;
@@ -89,20 +113,28 @@ impl App {
         }
         self.cfg.current_proxy = Some(name.into());
         self.cfg.save()?;
-        if self.cfg.sys_proxy_on { sysproxy::enable(self.cfg.http_port)?; }
+        if self.cfg.sys_proxy_on {
+            sysproxy::enable(self.cfg.http_port)?;
+        }
         Ok(())
     }
 
     pub fn toggle_sys_proxy(&mut self) -> Result<()> {
         self.cfg.sys_proxy_on = !self.cfg.sys_proxy_on;
-        if self.cfg.sys_proxy_on { sysproxy::enable(self.cfg.http_port)?; } else { sysproxy::disable()?; }
+        if self.cfg.sys_proxy_on {
+            sysproxy::enable(self.cfg.http_port)?;
+        } else {
+            sysproxy::disable()?;
+        }
         self.cfg.save()?;
         Ok(())
     }
 
     fn log(&mut self, msg: String) {
         self.logs.push(msg);
-        if self.logs.len() > 500 { self.logs.drain(0..100); }
+        if self.logs.len() > 500 {
+            self.logs.drain(0..100);
+        }
     }
 
     /// Push a message onto the application log (shown in the Logs tab).
