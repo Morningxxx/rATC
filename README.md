@@ -8,7 +8,7 @@ A Linux terminal (TUI) proxy manager in the spirit of Clash Verge, backed by [xr
 - Node switching with per-protocol compatibility markers (unsupported nodes greyed out)
 - Automatic Clash → xray-core rule conversion with a minimal fallback rule set
 - xray-core lifecycle management (start / reload on node switch)
-- Local HTTP (7890) + SOCKS (7891) inbound
+- Local HTTP (10809) + SOCKS (10808) inbound
 - Optional system-proxy toggle via a sourced `proxy.sh`
 - 5-tab TUI: 节点 / 订阅 / 规则 / 日志 / 设置
 

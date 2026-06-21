@@ -36,8 +36,8 @@ fn default_true() -> bool {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
-            http_port: 7890,
-            socks_port: 7891,
+            http_port: 10809,
+            socks_port: 10808,
             listen: "127.0.0.1".into(),
             xray_path: "/usr/local/bin/xray".into(),
             allow_lan: false,
@@ -92,7 +92,7 @@ mod tests {
         let cfg = AppConfig::default();
         let s = serde_json::to_string(&cfg).unwrap();
         let back: AppConfig = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.http_port, 7890);
+        assert_eq!(back.http_port, 10809);
         assert!(back.exit_kills_xray);
     }
 
