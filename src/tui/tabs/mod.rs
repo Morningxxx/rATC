@@ -7,7 +7,7 @@ pub mod subscriptions;
 use crate::app::App;
 use crate::tui::app_state::UiState;
 
-pub fn render(f: &mut ratatui::Frame<'_>, app: &App, ui: &UiState, area: ratatui::layout::Rect) {
+pub fn render(f: &mut ratatui::Frame<'_>, app: &App, ui: &mut UiState, area: ratatui::layout::Rect) {
     use crate::tui::app_state::Tab;
     match ui.tab {
         Tab::Nodes => nodes::render(f, app, ui, area),

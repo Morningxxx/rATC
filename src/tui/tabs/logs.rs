@@ -5,7 +5,7 @@ use ratatui::text::Line;
 use ratatui::widgets::{Block, Borders, List, ListItem};
 use ratatui::Frame;
 
-pub fn render(f: &mut Frame<'_>, app: &App, _ui: &UiState, area: Rect) {
+pub fn render(f: &mut Frame<'_>, app: &App, _ui: &mut UiState, area: Rect) {
     let items: Vec<ListItem> = app
         .logs
         .iter()

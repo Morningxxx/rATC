@@ -6,7 +6,7 @@ use ratatui::text::Line;
 use ratatui::widgets::{Block, Borders, List, ListItem};
 use ratatui::Frame;
 
-pub fn render(f: &mut Frame<'_>, app: &App, _ui: &UiState, area: Rect) {
+pub fn render(f: &mut Frame<'_>, app: &App, _ui: &mut UiState, area: Rect) {
     let Some(sub) = &app.sub else {
         f.render_widget(
             Block::default().borders(Borders::ALL).title("路由规则"),

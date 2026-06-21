@@ -34,7 +34,12 @@ fn main() -> ratc::error::Result<()> {
         app.cfg.save()?;
     }
 
-    app.refresh_subscription()?;
+    // Fast path: reuse the last fetched subscription from disk so startup is
+    // instant. Only hit the network on first open (no snapshot) — manual
+    // refreshes (`r` / `u`) update the snapshot for next time.
+    if !app.load_cached_subscription()? {
+        app.refresh_subscription()?;
+    }
     if app.cfg.current_proxy.is_none() {
         if let Some(p) = app.supported_proxies().first() {
             let name = p.name.clone();

@@ -25,6 +25,15 @@ pub fn proxy_sh() -> PathBuf {
 pub fn xray_config_file() -> PathBuf {
     config_dir().join("xray.json")
 }
+/// Snapshot of the last successfully fetched subscription (raw clash YAML),
+/// so startup can skip the network unless the user asks for a refresh.
+pub fn subscription_snapshot() -> PathBuf {
+    cache_dir().join("last_subscription.yaml")
+}
+/// Snapshot of downloaded rule-set payloads keyed by provider name.
+pub fn rulesets_snapshot() -> PathBuf {
+    cache_dir().join("last_rulesets.json")
+}
 
 /// Ensure all runtime directories exist with secure perms (0700).
 pub fn ensure_dirs() -> std::io::Result<()> {

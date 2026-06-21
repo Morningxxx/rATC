@@ -21,10 +21,20 @@ impl Fetcher {
     }
 
     fn cache_path(&self, url: &str) -> std::path::PathBuf {
+        Self::path_for(&self.cache_dir, url)
+    }
+
+    /// Where a URL's raw-YAML cache lives under the default cache dir, without
+    /// needing a Fetcher instance (used by the UI to show "已缓存").
+    pub fn cache_path_for(url: &str) -> std::path::PathBuf {
+        Self::path_for(&crate::store::paths::cache_dir(), url)
+    }
+
+    fn path_for(dir: &std::path::Path, url: &str) -> std::path::PathBuf {
         let mut h = Sha256::new();
         h.update(url.as_bytes());
         let hex = format!("{:x}", h.finalize());
-        self.cache_dir.join(format!("{hex}.yaml"))
+        dir.join(format!("{hex}.yaml"))
     }
 
     /// Fetch the raw YAML text, falling back to cache on error.
