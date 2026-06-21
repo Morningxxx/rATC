@@ -97,7 +97,7 @@ mod tests {
 
     fn proxy(yaml: &str) -> Proxy {
         let raw: RawProxy = serde_yaml::from_str(yaml).unwrap();
-        classify(&raw)
+        classify(&raw).expect("valid test proxy")
     }
 
     #[test]

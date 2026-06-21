@@ -67,10 +67,13 @@ pub struct PluginOpts {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct RawProxy {
+    #[serde(default)]
     pub name: String,
+    #[serde(default)]
     pub server: String,
-    pub port: u16,
-    #[serde(rename = "type")]
+    #[serde(default)]
+    pub port: Option<u16>,
+    #[serde(rename = "type", default)]
     pub kind: String,
     #[serde(flatten)]
     pub fields: serde_yaml::Mapping,
@@ -96,8 +99,14 @@ impl Proxy {
     }
 }
 
-pub fn classify(raw: &RawProxy) -> Proxy {
+pub fn classify(raw: &RawProxy) -> Option<Proxy> {
     use serde_yaml::Value;
+
+    if raw.name.is_empty() || raw.server.is_empty() || raw.port.is_none() || raw.kind.is_empty() {
+        return None;
+    }
+    let port = raw.port.unwrap();
+
     let g = |k: &str| raw.fields.get(&Value::String(k.into())).cloned();
     let gs = |k: &str| g(k).and_then(|v| v.as_str().map(String::from));
     let gn = |k: &str| g(k).and_then(|v| v.as_u64()).map(|n| n as u32);
@@ -134,7 +143,7 @@ pub fn classify(raw: &RawProxy) -> Proxy {
         },
         other => ProxyType::Unsupported { kind: other.into() },
     };
-    Proxy { name: raw.name.clone(), server: raw.server.clone(), port: raw.port, ptype }
+    Some(Proxy { name: raw.name.clone(), server: raw.server.clone(), port, ptype })
 }
 
 #[cfg(test)]
@@ -145,7 +154,7 @@ mod tests {
     fn classify_vless_reality_is_supported() {
         let yaml = "name: hk1\nserver: 1.2.3.4\nport: 443\ntype: vless\nuuid: abc\nnetwork: tcp\ntls: true\nservername: azure.com\nreality-opts:\n  public-key: PK\n";
         let raw: RawProxy = serde_yaml::from_str(yaml).unwrap();
-        let p = classify(&raw);
+        let p = classify(&raw).unwrap();
         assert_eq!(p.compat(), Compat::Supported);
         assert!(matches!(p.ptype, ProxyType::Vless { .. }));
     }
@@ -154,7 +163,8 @@ mod tests {
     fn classify_ss_with_plugin_is_unsupported() {
         let yaml = "name: s1\nserver: 1.2.3.4\nport: 443\ntype: ss\npassword: p\ncipher: 2022-blake3-aes-256-gcm\nplugin: shadow-tls\nplugin-opts:\n  host: h\n";
         let raw: RawProxy = serde_yaml::from_str(yaml).unwrap();
-        let p = classify(&raw);
+        let p = classify(&raw).unwrap();
+        assert!(matches!(p.ptype, ProxyType::Shadowsocks { .. }));
         assert!(matches!(p.compat(), Compat::Unsupported(_)));
     }
 
@@ -162,8 +172,15 @@ mod tests {
     fn classify_hysteria2_is_unsupported() {
         let yaml = "name: h1\nserver: 1.2.3.4\nport: 443\ntype: hysteria2\npassword: p\n";
         let raw: RawProxy = serde_yaml::from_str(yaml).unwrap();
-        let p = classify(&raw);
+        let p = classify(&raw).unwrap();
         assert!(matches!(p.ptype, ProxyType::Unsupported { .. }));
         assert!(matches!(p.compat(), Compat::Unsupported(_)));
+    }
+
+    #[test]
+    fn classify_missing_port_is_skipped() {
+        let yaml = "name: bad\nserver: 1.2.3.4\ntype: vless\n";
+        let raw: RawProxy = serde_yaml::from_str(yaml).unwrap();
+        assert!(classify(&raw).is_none());
     }
 }

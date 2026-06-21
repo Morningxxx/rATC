@@ -44,7 +44,7 @@ impl App {
         };
         let fetcher = Fetcher::new(crate::store::paths::cache_dir())?;
         let parsed = fetcher.fetch(&entry.url)?;
-        self.log(format!("subscription refreshed: {} proxies", parsed.proxies.len()));
+        self.log(format!("subscription refreshed: {} proxies ({} skipped)", parsed.proxies.len(), parsed.skipped_proxies));
 
         // Best-effort: download each HTTP rule-provider so RULE-SET rules can be
         // expanded into xray routing. Failures are non-fatal (the fallback rules

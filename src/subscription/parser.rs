@@ -16,13 +16,15 @@ pub struct ParsedSubscription {
     pub rule_providers: HashMap<String, RuleProvider>,
     pub rules: Vec<Rule>,
     pub group_names: HashSet<String>,
+    pub skipped_proxies: usize,
 }
 
 pub fn parse(text: &str) -> Result<ParsedSubscription> {
     let cfg: ClashConfig = serde_yaml::from_str(text)
         .map_err(|e| Error::Parse(format!("yaml: {e}")))?;
     let group_names: HashSet<String> = cfg.proxy_groups.iter().map(|g| g.name.clone()).collect();
-    let proxies: Vec<Proxy> = cfg.proxies.iter().map(classify).collect();
+    let proxies: Vec<Proxy> = cfg.proxies.iter().filter_map(classify).collect();
+    let skipped = cfg.proxies.len().saturating_sub(proxies.len());
     let rules: Vec<Rule> = cfg.rules.iter()
         .filter_map(|line| Rule::parse(line, &group_names))
         .collect();
@@ -34,6 +36,7 @@ pub fn parse(text: &str) -> Result<ParsedSubscription> {
         rule_providers: cfg.rule_providers,
         rules,
         group_names,
+        skipped_proxies: skipped,
     })
 }
 
